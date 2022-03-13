@@ -6,6 +6,8 @@ import 'package:very_good_slide_puzzle/dashatar/dashatar.dart';
 import 'package:very_good_slide_puzzle/l10n/l10n.dart';
 import 'package:very_good_slide_puzzle/layout/layout.dart';
 import 'package:very_good_slide_puzzle/models/models.dart';
+import 'package:very_good_slide_puzzle/movement/bloc/movement_cubit.dart';
+import 'package:very_good_slide_puzzle/movement/presentation/movement_theme.dart';
 import 'package:very_good_slide_puzzle/puzzle/puzzle.dart';
 import 'package:very_good_slide_puzzle/simple/simple.dart';
 import 'package:very_good_slide_puzzle/theme/theme.dart';
@@ -28,11 +30,7 @@ class PuzzlePage extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) => DashatarThemeBloc(
-            themes: const [
-              BlueDashatarTheme(),
-              GreenDashatarTheme(),
-              YellowDashatarTheme()
-            ],
+            themes: const [BlueDashatarTheme(), GreenDashatarTheme(), YellowDashatarTheme()],
           ),
         ),
         BlocProvider(
@@ -46,6 +44,7 @@ class PuzzlePage extends StatelessWidget {
             initialThemes: [
               const SimpleTheme(),
               context.read<DashatarThemeBloc>().state.theme,
+              const MovementTheme(),
             ],
           ),
         ),
@@ -77,6 +76,8 @@ class PuzzleView extends StatelessWidget {
     /// Shuffle only if the current theme is Simple.
     final shufflePuzzle = theme is SimpleTheme;
 
+    final puzzleBloc = PuzzleBloc(4);
+
     return Scaffold(
       body: AnimatedContainer(
         duration: PuzzleThemeAnimationDuration.backgroundColorChange,
@@ -94,12 +95,15 @@ class PuzzleView extends StatelessWidget {
                 ),
               ),
               BlocProvider(
-                create: (context) => PuzzleBloc(4)
+                create: (context) => puzzleBloc
                   ..add(
                     PuzzleInitialized(
                       shufflePuzzle: shufflePuzzle,
                     ),
                   ),
+              ),
+              BlocProvider(
+                create: (_) => MovementCubit(puzzleBloc),
               ),
             ],
             child: const _Puzzle(
@@ -124,8 +128,7 @@ class _Puzzle extends StatelessWidget {
       builder: (context, constraints) {
         return Stack(
           children: [
-            if (theme is SimpleTheme)
-              theme.layoutDelegate.backgroundBuilder(state),
+            if (theme is SimpleTheme) theme.layoutDelegate.backgroundBuilder(state),
             SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -139,8 +142,7 @@ class _Puzzle extends StatelessWidget {
                 ),
               ),
             ),
-            if (theme is! SimpleTheme)
-              theme.layoutDelegate.backgroundBuilder(state),
+            if (theme is! SimpleTheme) theme.layoutDelegate.backgroundBuilder(state),
           ],
         );
       },
@@ -414,16 +416,12 @@ class PuzzleMenuItem extends StatelessWidget {
       medium: (_, child) => child!,
       large: (_, child) => child!,
       child: (currentSize) {
-        final leftPadding =
-            themeIndex > 0 && currentSize != ResponsiveLayoutSize.small
-                ? 40.0
-                : 0.0;
+        final leftPadding = themeIndex > 0 && currentSize != ResponsiveLayoutSize.small ? 40.0 : 0.0;
 
         return Padding(
           padding: EdgeInsets.only(left: leftPadding),
           child: Tooltip(
-            message:
-                theme != currentTheme ? context.l10n.puzzleChangeTooltip : '',
+            message: theme != currentTheme ? context.l10n.puzzleChangeTooltip : '',
             child: TextButton(
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
@@ -437,9 +435,7 @@ class PuzzleMenuItem extends StatelessWidget {
                 }
 
                 // Update the currently selected theme.
-                context
-                    .read<ThemeBloc>()
-                    .add(ThemeChanged(themeIndex: themeIndex));
+                context.read<ThemeBloc>().add(ThemeChanged(themeIndex: themeIndex));
 
                 // Reset the timer of the currently running puzzle.
                 context.read<TimerBloc>().add(const TimerReset());
@@ -459,9 +455,7 @@ class PuzzleMenuItem extends StatelessWidget {
               child: AnimatedDefaultTextStyle(
                 duration: PuzzleThemeAnimationDuration.textStyle,
                 style: PuzzleTextStyle.headline5.copyWith(
-                  color: isCurrentTheme
-                      ? currentTheme.menuActiveColor
-                      : currentTheme.menuInactiveColor,
+                  color: isCurrentTheme ? currentTheme.menuActiveColor : currentTheme.menuInactiveColor,
                 ),
                 child: Text(theme.name),
               ),
@@ -492,8 +486,7 @@ final puzzleTitleKey = GlobalKey(debugLabel: 'puzzle_title');
 ///
 /// Used to animate the transition of [NumberOfMovesAndTilesLeft]
 /// when changing a theme.
-final numberOfMovesAndTilesLeftKey =
-    GlobalKey(debugLabel: 'number_of_moves_and_tiles_left');
+final numberOfMovesAndTilesLeftKey = GlobalKey(debugLabel: 'number_of_moves_and_tiles_left');
 
 /// The global key of [AudioControl].
 ///
