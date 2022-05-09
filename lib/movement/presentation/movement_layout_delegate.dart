@@ -14,15 +14,18 @@ class MovementLayoutDelegate extends SimplePuzzleLayoutDelegate {
       builder: (context, constraints) {
         final movementState = context.select((MovementCubit cubit) => cubit.state);
         final movementCandidate = movementState.movementCandidate;
+        // if this tile is not elegible for movement, return the original view
+        if (movementCandidate == null || movementCandidate.currentPosition != tile.currentPosition) {
+          return super.tileBuilder(tile, state);
+        }
+        // Offset the position of the movement candidate tile in a given direction
         final halfTile = constraints.maxWidth / 2;
-        final xTranslation = movementCandidate != tile ? 0.0 : movementState.yTilt * halfTile;
-        final yTranslation = movementCandidate != tile ? 0.0 : movementState.xTilt * halfTile;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           curve: Curves.slowMiddle,
           transform: Matrix4.translationValues(
-            xTranslation,
-            yTranslation,
+            movementState.yTilt * halfTile,
+            movementState.xTilt * halfTile,
             0,
           ),
           child: super.tileBuilder(tile, state),

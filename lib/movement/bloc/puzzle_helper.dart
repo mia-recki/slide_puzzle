@@ -31,8 +31,5 @@ extension on Tile {
 }
 
 extension on Position {
-  Position copyWith({int? x, int? y}) => Position(
-        x: x ?? this.x,
-        y: y ?? this.y,
-      );
+  Position copyWith({int? x, int? y}) => Position(x: x ?? this.x, y: y ?? this.y);
 }

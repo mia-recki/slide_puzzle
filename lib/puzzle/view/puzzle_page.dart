@@ -74,9 +74,7 @@ class PuzzleView extends StatelessWidget {
     final theme = context.select((ThemeBloc bloc) => bloc.state.theme);
 
     /// Shuffle only if the current theme is Simple.
-    final shufflePuzzle = theme is SimpleTheme;
-
-    final puzzleBloc = PuzzleBloc(4);
+    final shufflePuzzle = theme is SimpleTheme || theme is MovementTheme;
 
     return Scaffold(
       body: AnimatedContainer(
@@ -95,7 +93,7 @@ class PuzzleView extends StatelessWidget {
                 ),
               ),
               BlocProvider(
-                create: (context) => puzzleBloc
+                create: (context) => PuzzleBloc(4)
                   ..add(
                     PuzzleInitialized(
                       shufflePuzzle: shufflePuzzle,
@@ -103,7 +101,7 @@ class PuzzleView extends StatelessWidget {
                   ),
               ),
               BlocProvider(
-                create: (_) => MovementCubit(puzzleBloc),
+                create: (_) => MovementCubit(context.read<PuzzleBloc>()),
               ),
             ],
             child: const _Puzzle(
@@ -448,7 +446,7 @@ class PuzzleMenuItem extends StatelessWidget {
                 // Initialize the puzzle board for the newly selected theme.
                 context.read<PuzzleBloc>().add(
                       PuzzleInitialized(
-                        shufflePuzzle: theme is SimpleTheme,
+                        shufflePuzzle: theme is SimpleTheme || theme is MovementTheme,
                       ),
                     );
               },
